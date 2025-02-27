@@ -2,13 +2,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Indexes of columns in the input 
+#define EMAIL 0
+#define TIMESTAMP 1
+#define FIRST_NAME 24
+#define LAST_NAME 23
+#define GRADE 25
+#define GENDER 26
+#define FIRST_QUESTION 2
+
+// Number of questions
+#define NUM_OF_QUESTIONS 21
+
 struct Response {
     int id;
     char first_name[64];
     char last_name[64];
     char grade;
     char gender;
-    char answers[21][64];
+    char answers[NUM_OF_QUESTIONS][64];
     int grade_ids[10];
     int grade_points[10];
     int all_ids[10];
@@ -42,12 +54,12 @@ void parseResponse(Response* response, char line[1024]) {
             token_index++;
         } else {
             switch (token_count) {
-                case 0: case 1: break;
-                case 23: memcpy(response->last_name, token, 64); break;
-                case 24: memcpy(response->first_name, token, 64); break;
-                case 25: response->grade = atoi(token); break;
-                case 26: response->gender = (strcmp(token, girl)); break;
-                default: memcpy(response->answers[token_count - 2] , token, 64); break;
+                case EMAIL: case TIMESTAMP: break;
+                case LAST_NAME: memcpy(response->last_name, token, 64); break;
+                case FIRST_NAME: memcpy(response->first_name, token, 64); break;
+                case GRADE: response->grade = atoi(token); break;
+                case GENDER: response->gender = (strcmp(token, girl)); break;
+                default: memcpy(response->answers[token_count - FIRST_QUESTION] , token, 64); break;
             }
             token_count++;
             memset(token, 0, 64);
@@ -57,7 +69,7 @@ void parseResponse(Response* response, char line[1024]) {
     }
 }
 
-Response* parseFile(FILE* inFile) { // very janky, fix later
+Response* parseFile(FILE* inFile) {
     char buffer[1024];
     Response* prev = nullptr;
     Response* head;
@@ -89,7 +101,7 @@ void generateMatches(Response* responses) {
         j = responses;
         while (j != nullptr) {
             if (i->id != j->id && i->gender != j->gender) {
-                for (int k = 0; k < 21; k++) {
+                for (int k = 0; k < NUM_OF_QUESTIONS; k++) {
                     if (strcmp(i->answers[k], j->answers[k]) == 0) {
                         points++;
                     }
@@ -201,6 +213,7 @@ void freeResponses(Response* responses) {
 int main(int argc, char** argv) {
     if (argc < 3) {
         printf("Error: needs input and output file.\n");
+        return 1;
     }
 
     FILE* inFile = fopen(argv[1], "r");
