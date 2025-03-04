@@ -16,19 +16,19 @@
 
 struct Response {
     int id;
-    char first_name[64];
-    char last_name[64];
+    char firstName[64];
+    char lastName[64];
     char grade;
     char gender;
     char answers[NUM_OF_QUESTIONS][64];
-    int grade_ids[10];
-    int grade_points[10];
-    int all_ids[10];
-    int all_points[10];
+    int gradeIds[10];
+    int gradePoints[10];
+    int allIds[10];
+    int allPoints[10];
     Response* next;
 };
 
-void add_match(int ids[10], int points[10], int id, int point) {
+void addMatch(int ids[10], int points[10], int id, int point) {
     for (int i = 0; i < 10; i++) {
         if (points[i] < point) {
             memmove(&ids[i+1], &ids[i], (10 - i - 1) * sizeof(int));
@@ -43,29 +43,29 @@ void add_match(int ids[10], int points[10], int id, int point) {
 }
 
 void parseResponse(Response* response, char line[1024]) {
-    const char girl[64] = "Girl\x0D";
+    const char girl[64] = "Girl";
     char token[64] = "";
-    int line_index = 0;
-    int token_index = 0;
-    int token_count = 0;
-    while (line[line_index] != 0) {
-        if (line[line_index] != ',' && line[line_index] != '\n') {
-            token[token_index] = line[line_index];
-            token_index++;
+    int lineIndex = 0;
+    int tokenIndex = 0;
+    int tokenCount = 0;
+    while (line[lineIndex] != 0) {
+        if (line[lineIndex] != ',' && line[lineIndex] != '\n') {
+            token[tokenIndex] = line[lineIndex];
+            tokenIndex++;
         } else {
-            switch (token_count) {
+            switch (tokenCount) {
                 case EMAIL: case TIMESTAMP: break;
-                case LAST_NAME: memcpy(response->last_name, token, 64); break;
-                case FIRST_NAME: memcpy(response->first_name, token, 64); break;
+                case LAST_NAME: memcpy(response->lastName, token, 64); break;
+                case FIRST_NAME: memcpy(response->firstName, token, 64); break;
                 case GRADE: response->grade = atoi(token); break;
                 case GENDER: response->gender = (strcmp(token, girl)); break;
-                default: memcpy(response->answers[token_count - FIRST_QUESTION] , token, 64); break;
+                default: memcpy(response->answers[tokenCount - FIRST_QUESTION] , token, 64); break;
             }
-            token_count++;
+            tokenCount++;
             memset(token, 0, 64);
-            token_index = 0;
+            tokenIndex = 0;
         }
-        line_index++;
+        lineIndex++;
     }
 }
 
@@ -107,9 +107,9 @@ void generateMatches(Response* responses) {
                     }
                 }
                 if (i->grade == j->grade) {
-                    add_match(i->grade_ids, i->grade_points, j->id, points);
+                    addMatch(i->gradeIds, i->gradePoints, j->id, points);
                 }
-                add_match(i->all_ids, i->all_points, j->id, points);
+                addMatch(i->allIds, i->allPoints, j->id, points);
             }
             points = 0;
             j = j->next;
@@ -130,39 +130,16 @@ Response* getResponseFromID(Response* responses, int id) {
 }
 
 void outputMatches(Response* responses, FILE* outFile) {
-    // const char* columnsStart = "ID,Last Name,First Name,Gender,";
     char intBuf[10] = "";
-    // fputs(columnsStart, outFile);
-    // for (int i = 1; i <= 10; i++) {
-    //     fputs("Grade Match ", outFile);
-    //     snprintf(intBuf, 10, "%i", i);
-    //     fputs(intBuf, outFile);
-    //     fputs(" Last Name,", outFile);
-
-    //     fputs("Grade Match ", outFile);
-    //     fputs(intBuf, outFile);
-    //     fputs(" First Name,", outFile);
-    // }
-    // for (int i = 1; i <= 10; i++) {
-    //     fputs("All Match ", outFile);
-    //     snprintf(intBuf, 10, "%i", i);
-    //     fputs(intBuf, outFile);
-    //     fputs(" Last Name,", outFile);
-
-    //     fputs("All Match ", outFile);
-    //     fputs(intBuf, outFile);
-    //     fputs(" First Name,", outFile);
-    //}
-    //fputs("\n", outFile);
     const char* row = "OWNER,TEN,NINE,EIGHT,SEVEN,SIX,FIVE,FOUR,THREE,TWO,ONE,OWNER2,TEN2,NINE2,EIGHT2,SEVEN2,SIX2,FIVE2,FOUR2,THREE2,TWO2,ONE2\n";
     fputs(row, outFile);
 
     Response* response = responses;
     while (response != nullptr) {
         fputs("\"", outFile);
-        fputs(response->last_name, outFile);
+        fputs(response->lastName, outFile);
         fputs(", ", outFile);
-        fputs(response->first_name, outFile);
+        fputs(response->firstName, outFile);
         fputs("   ", outFile);
         snprintf(intBuf, 10, "%i", response->grade);
         fputs(intBuf, outFile);
@@ -170,14 +147,14 @@ void outputMatches(Response* responses, FILE* outFile) {
         
         for (int i = 0; i < 10; i++) {
             Response* match;
-            match = getResponseFromID(responses, response->all_ids[i]);
+            match = getResponseFromID(responses, response->allIds[i]);
             if (match == nullptr) {
                 fputs("NULL,", outFile);
             } else {
                 fputs("\"", outFile);
-                fputs(match->last_name, outFile);
+                fputs(match->lastName, outFile);
                 fputs(", ", outFile);
-                fputs(match->first_name, outFile);
+                fputs(match->firstName, outFile);
                 fputs("   ", outFile);
                 snprintf(intBuf, 10, "%i", response->grade);
                 fputs(intBuf, outFile);
@@ -187,14 +164,14 @@ void outputMatches(Response* responses, FILE* outFile) {
         
         for (int i = 0; i < 10; i++) {
             Response* match;
-            match = getResponseFromID(responses, response->grade_ids[i]);
+            match = getResponseFromID(responses, response->gradeIds[i]);
             if (match == nullptr) {
                 fputs("NULL,", outFile);
             } else {
                 fputs("\"", outFile);
-                fputs(match->last_name, outFile);
+                fputs(match->lastName, outFile);
                 fputs(", ", outFile);
-                fputs(match->first_name, outFile);
+                fputs(match->firstName, outFile);
                 fputs("   ", outFile);
                 snprintf(intBuf, 10, "%i", response->grade);
                 fputs(intBuf, outFile);

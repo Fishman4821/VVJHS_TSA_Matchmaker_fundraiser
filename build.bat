@@ -1,0 +1,1 @@
+.\mingw64\bin\g++ main.cpp -o main.exe 
